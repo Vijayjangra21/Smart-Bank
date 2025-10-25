@@ -321,7 +321,7 @@ Planned features for future versions:
 
 ## License and Acknowledgments
 
-- **License:** MIT (See LICENSE file if included)  
+- **License:** MIT (See LICENSE file)  
 - **Author:** Vijay  
 - **Acknowledgments:**  
 Open-source Python and SQLite community, hackathon mentors and organizers, and all contributors.
