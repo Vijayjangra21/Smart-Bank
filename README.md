@@ -1,748 +1,327 @@
-# SmartBank – Banking Backend System
+# Money Transfer System
 
-**A secure, scalable banking backend system implementing core banking operations with modern technologies.**
+**Version:** 1.0.0  
+**Status:** Development/Educational  
+**Author:** Vijay  
+**Date:** October 25, 2025  
 
 ---
 
-## 📖 Table of Contents
+## Executive Summary
 
-1. [Project Overview](#project-overview)
-2. [Features](#features)
-3. [System Architecture](#system-architecture)
-4. [Technology Stack](#technology-stack)
-5. [System Actors](#system-actors)
-6. [Project Structure](#project-structure)
-7. [Implementation Strategy](#implementation-strategy)
-8. [3-Hour Development Plan](#3-hour-development-plan)
-9. [Setup Instructions](#setup-instructions)
-10. [GitHub Deployment](#github-deployment)
-11. [Demo Scenarios](#demo-scenarios)
-12. [Success Metrics](#success-metrics)
+This project presents a secure, ACID-compliant money transfer system built with Python and SQLite, designed as a hackathon submission. The application features a robust command-line interface for peer-to-peer account transfers, comprehensive validation mechanisms, detailed transaction logging, and full transactional database support using only the Python standard library. All system operations, including error handling and rollback, are implemented in a production-inspired manner for educational demonstration.
+
+---
+
+## Table of Contents
+
+- [Money Transfer System](#money-transfer-system)
+  - [Executive Summary](#executive-summary)
+  - [Table of Contents](#table-of-contents)
+  - [Project Overview](#project-overview)
+  - [Technology Stack](#technology-stack)
+  - [System Architecture](#system-architecture)
+  - [Feature Overview](#feature-overview)
+  - [Database Schema](#database-schema)
+    - [Table: sender\_accounts](#table-sender_accounts)
+    - [Table: receiver\_accounts](#table-receiver_accounts)
+    - [Table: transactions](#table-transactions)
+  - [Installation Guide](#installation-guide)
+    - [Prerequisites](#prerequisites)
+    - [Step-by-step Installation](#step-by-step-installation)
+  - [Sample Data](#sample-data)
+    - [Sender Accounts](#sender-accounts)
+    - [Receiver Accounts](#receiver-accounts)
+  - [Usage Instructions](#usage-instructions)
+    - [Starting the Application](#starting-the-application)
+    - [Viewing Transactions](#viewing-transactions)
+  - [Error Handling](#error-handling)
+  - [Transactional Operations](#transactional-operations)
+  - [Testing Suite](#testing-suite)
+  - [Security Features](#security-features)
+  - [Troubleshooting](#troubleshooting)
+  - [Future Enhancements](#future-enhancements)
+  - [Contributing](#contributing)
+  - [License and Acknowledgments](#license-and-acknowledgments)
 
 ---
 
 ## Project Overview
 
-**SmartBank** is a comprehensive banking backend system developed for the **HCLTech Hackathon 2025**. The project implements two core banking operations: **Money Transfer (Task 3)** and **Loan Application with EMI Calculation (Task 4)**.
-
-### Project Goals
-- Build a secure, functional banking system in 3 hours
-- Implement robust business logic for financial operations
-- Create a scalable architecture for future enhancements
-- Deploy to GitHub with professional documentation
-
-### Key Differentiators
-- **Fast Development**: Template-based frontend + custom backend
-- **Complete Features**: Two full banking operations working end-to-end
-- **Professional Code**: Clean architecture following industry standards
-- **Demo-Ready**: Easy to demonstrate to judges
-
----
-
-## Features
-
-### Task 3: Money Transfer
-
-**Functionality:**
-- Transfer funds between customer accounts
-- Real-time balance validation
-- Daily transaction limit enforcement
-- Transaction history tracking
-- Error handling for edge cases
-
-**Business Logic:**
-- Verify sender has sufficient balance
-- Prevent exceeding daily transfer limits
-- Atomic transaction processing (both accounts update or neither)
-- Log all transactions for audit trail
-
-**User Experience:**
-- Simple transfer form with recipient selection
-- Real-time balance display
-- Transaction confirmation
-- Success/error notifications
-
----
-
-### Task 4: Loan Application & EMI Calculation
-
-**Functionality:**
-- Submit loan applications with loan details
-- Automatic EMI (Equated Monthly Installment) calculation
-- Support multiple loan types (Personal, Home, Car, Education)
-- Admin approval/rejection workflow
-- Loan status tracking
-
-**Business Logic:**
-- EMI Calculation Formula: **EMI = [P × r × (1 + r)^n] / [(1 + r)^n - 1]**
-  - P = Principal amount
-  - r = Monthly interest rate
-  - n = Number of months
-- Validate loan amount based on customer eligibility
-- Generate repayment schedule
-- Track loan status (Pending → Approved/Rejected → Active → Closed)
-
-**User Experience:**
-- Loan application form with dynamic EMI preview
-- Loan status dashboard
-- Repayment schedule visualization
-- Admin panel for loan approvals
-
----
-
-## System Architecture
-
-### High-Level Design
-
-```
-┌─────────────────────────────────┐
-│   React Frontend                │
-│   (react-banking-app-template)  │
-└──────────────┬──────────────────┘
-               │ REST API (Axios)
-               │ JSON over HTTP
-               ▼
-┌─────────────────────────────────┐
-│   FastAPI Backend               │
-│   (Python 3.9+)                 │
-└──────────────┬──────────────────┘
-               │
-        ┌──────┴──────┐
-        ▼             ▼
-   ┌─────────┐   ┌──────────┐
-   │ SQLite  │   │ JWT Auth │
-   │ DB      │   │ Module   │
-   └─────────┘   └──────────┘
-```
-
-### Data Flow
-
-**Money Transfer Flow:**
-```
-1. Customer logs in → JWT token generated
-2. Customer selects recipient and amount
-3. Frontend validates input → Backend API call
-4. Backend validates balance and daily limits
-5. Backend executes transfer (update both accounts)
-6. Transaction logged in database
-7. Response sent to frontend
-8. Transaction history updated
-```
-
-**Loan Application Flow:**
-```
-1. Customer fills loan application form
-2. Frontend calculates EMI → displays preview
-3. Customer submits application
-4. Backend stores loan as "PENDING"
-5. Admin reviews application
-6. Admin approves/rejects
-7. Customer notified of status
-8. If approved, loan becomes "ACTIVE"
-```
+The Money Transfer System is a self-contained Python CLI application for secure money transfers between user accounts, fully backed by a local SQLite3 database. Major functionalities include account and transaction validation, daily receiver limits, security and authentication controls, comprehensive audit trails, and guaranteed ACID transactions. All operations and data flows adhere to best practices for financial software design.
 
 ---
 
 ## Technology Stack
 
-### Backend Components
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Framework | FastAPI | High-performance async API |
-| Database | SQLite | Lightweight, instant setup |
-| ORM | SQLAlchemy | Database abstraction |
-| Authentication | JWT | Secure token-based auth |
-| Password Hashing | bcrypt | Secure password storage |
-| Validation | Pydantic | Request/response validation |
-| Server | Uvicorn | ASGI application server |
-
-### Frontend Components
-| Component | Technology | Purpose |
-|-----------|-----------|---------|
-| Framework | React 18+ | UI library |
-| HTTP Client | Axios | API communication |
-| Styling | Tailwind CSS | CSS utility framework |
-| Routing | React Router | Page navigation |
-| UI Components | Pre-built | From template |
-
-### Tools & Services
-| Tool | Purpose |
-|------|---------|
-| Git | Version control |
-| GitHub | Repository hosting |
-| Docker | Containerization (optional) |
-| VSCode | Code editor |
+- **Language:** Python 3.6+  
+- **Database:** SQLite3 (bundled via standard library)  
+- **Interface:** Command Line (CLI)  
+- **Dependencies:** None (Python Standard Library Only)  
+- **Key Libraries:** `sqlite3`, `datetime`, `typing`, `hashlib`  
 
 ---
 
-## System Actors
+## System Architecture
 
-### 1. Customer
-**Responsibilities:**
-- Register and login to system
-- View account balance
-- Initiate money transfers
-- Apply for loans
-- Track transaction history
-- View loan status
+The project follows a layered architecture for clarity and maintainability:
 
-**Access Level:** Customer role
+| Layer         | Module          | Responsibility                                    |
+|---------------|-----------------|-------------------------------------------------|
+| Presentation  | main_db.py      | Handles CLI, user prompts, messaging             |
+| Business Logic| db_operations.py| Core transaction logic, validation, operations   |
+| Data Access   | database.py     | Manages SQLite connections, context managers     |
+| Initialization| init_db.py      | Database schema setup, sample data seeding       |
+| Testing       | test_db.py      | Automated verification of major operations       |
 
-### 2. Bank Admin
-**Responsibilities:**
-- Review loan applications
-- Approve or reject loans
-- Manage customer accounts
-- Monitor transactions
-- Generate reports
-
-**Access Level:** Admin role
-
-### 3. System (Backend)
-**Responsibilities:**
-- Process transactions
-- Calculate EMI
-- Validate business rules
-- Store data persistently
-- Generate responses
+All database transactions utilize context managers to enforce atomicity and guarantee resource clean-up, while modular separation ensures future feature expansion and clear auditing.
 
 ---
 
-## Project Structure
+## Feature Overview
 
-```
-smartbank/
-│
-├── frontend/                          # React application
-│   ├── src/
-│   │   ├── components/
-│   │   │   ├── TransferForm.jsx      # Task 3 form
-│   │   │   ├── LoanForm.jsx          # Task 4 form
-│   │   │   ├── Dashboard.jsx         # User dashboard
-│   │   │   └── AdminPanel.jsx        # Admin interface
-│   │   ├── services/
-│   │   │   └── api.js               # API client
-│   │   ├── App.jsx
-│   │   └── main.jsx
-│   ├── package.json
-│   └── .env
-│
-├── backend/                           # FastAPI application
-│   ├── app/
-│   │   ├── main.py                  # Entry point
-│   │   ├── database.py              # Database connection
-│   │   ├── models.py                # SQLAlchemy models
-│   │   ├── schemas.py               # Pydantic schemas
-│   │   ├── auth.py                  # Authentication logic
-│   │   ├── transactions.py          # Task 3: Transfer logic
-│   │   └── loans.py                 # Task 4: Loan logic
-│   ├── requirements.txt
-│   └── .env
-│
-├── .gitignore
-├── README.md
-└── docker-compose.yml (optional)
-```
+- **Account & Currency Validation:** Ensures both sender and receiver accounts exist, are active, and use matching currencies  
+- **Authentication:** Password-based verification with three attempts maximum  
+- **Amount & Balance Checks:** Validates transfer amounts and ensures sufficient funds  
+- **Daily Limits:** Receiver daily transaction limit with automatic reset  
+- **Contact Verification:** Confirms sender's registered phone for security  
+- **Transaction Reason (Optional):** Transfer notes  
+- **Transactional Safety:** All transfers executed via ACID-compliant SQLite transaction; rollback guaranteed if any step fails  
+- **Full Audit Trail:** Logs all transactions, including failures, with balance before/after and reason  
+- **CLI Guidance:** Clear, interactive CLI with step-by-step prompts  
+- **Database Integrity:** All failures recorded for audit compliance  
 
 ---
 
-## Implementation Strategy
+## Database Schema
 
-### Development Approach: Template + Custom Backend
+### Table: sender_accounts
 
-**Why This Strategy?**
-- Saves 40-50% development time using existing frontend template
-- Allows focus on core business logic in backend
-- Leverages best practices in UI/UX from template
-- Enables rapid deployment
+| Column           | Type  | Description                 |
+|------------------|-------|-----------------------------|
+| account_number   | TEXT  | Primary Key. Unique Sender ID|
+| account_holder_name | TEXT | Sender name                  |
+| password         | TEXT  | Sender password             |
+| balance          | REAL  | Current balance             |
+| currency         | TEXT  | Currency code (INR, USD, EUR, etc.) |
+| contact_number   | TEXT  | Registered contact number   |
+| is_active        | INTEGER | Active flag (1=active, 0=inactive) |
 
-### Frontend Strategy
-- **Use**: react-banking-app-template by cenksari
-- **Customize**: Adapt components for Task 3 & 4
-- **Connect**: Point to FastAPI backend
-- **Time**: 30-40 minutes
+### Table: receiver_accounts
 
-### Backend Strategy
-- **Build**: Custom FastAPI implementation
-- **Focus**: Business logic for Tasks 3 & 4
-- **Database**: SQLite for instant setup
-- **Time**: 90-100 minutes
+| Column           | Type  | Description                   |
+|------------------|-------|-------------------------------|
+| account_number   | TEXT  | Primary Key. Unique Receiver ID|
+| account_holder_name | TEXT | Receiver name                 |
+| daily_limit      | REAL  | Daily maximum receipt amount  |
+| daily_received   | REAL  | Total received today          |
+| last_reset_date  | TEXT  | Date daily_received last reset|
+| currency         | TEXT  | Currency code                 |
+| is_active        | INTEGER | Active flag                  |
 
-### Integration Strategy
-- **Connect**: Frontend API calls to backend
-- **Test**: Manual testing of full user flows
-- **Deploy**: Push to GitHub
-- **Time**: 30-40 minutes
+### Table: transactions
 
----
-
-## 3-Hour Development Plan
-
-### Timeline Overview
-
-| Phase | Time | Deliverable |
-|-------|------|-------------|
-| Setup | 30 min | Frontend + Backend foundation |
-| Task 3 | 45 min | Money transfer working |
-| Task 4 | 45 min | Loan application working |
-| Integration | 20 min | Frontend-backend connected |
-| Testing | 15 min | End-to-end validation |
-| GitHub | 15 min | Code pushed and documented |
-
-### Phase-by-Phase Breakdown
-
-#### Phase 1: Environment Setup (0-30 min)
-
-**Frontend (15 min)**
-```
-1. Clone: git clone https://github.com/cenksari/react-banking-app-template.git frontend
-2. Setup: cd frontend && npm install
-3. Verify: npm run dev (check if it runs)
-4. Add .env: VITE_API_URL=http://localhost:8000
-```
-
-**Backend (15 min)**
-```
-1. Create: mkdir backend && cd backend
-2. Venv: python -m venv venv && source venv/bin/activate
-3. Install: pip install fastapi uvicorn sqlalchemy pydantic python-jose passlib bcrypt
-4. Create: app/main.py with basic FastAPI app structure
-```
+| Column                | Type  | Description                          |
+|-----------------------|-------|------------------------------------|
+| transaction_id        | TEXT  | Transaction Unique ID (Primary Key) |
+| sender_account        | TEXT  | Sender account number               |
+| receiver_account      | TEXT  | Receiver account number             |
+| amount                | REAL  | Money transferred                  |
+| currency              | TEXT  | Currency code                     |
+| transaction_timestamp | TEXT  | ISO 8601 timestamp                |
+| status                | TEXT  | SUCCESS or FAILED                 |
+| reason                | TEXT  | Transaction purpose (optional)    |
+| sender_balance_before | REAL  | Balance before transfer            |
+| sender_balance_after  | REAL  | Balance after transfer             |
+| failure_reason        | TEXT  | Populated if transaction failed   |
 
 ---
 
-#### Phase 2: Backend Foundation (30-75 min)
-
-**Database Models (15 min)**
-- User model (id, email, password_hash, name, role)
-- Account model (id, user_id, balance, account_type)
-- Transaction model (id, from_account_id, to_account_id, amount, timestamp)
-- Loan model (id, user_id, amount, tenure, status, emi_amount)
-
-**API Endpoints (25 min)**
-- Authentication:
-  - POST /auth/register
-  - POST /auth/login
-  - GET /auth/me
-- Accounts:
-  - GET /accounts/{id}
-  - POST /accounts
-
-**Database (10 min)**
-- Create SQLite database
-- Initialize tables
-- Add seed data (test customers with accounts)
-
----
-
-#### Phase 3: Task 3 - Money Transfer (75-120 min)
-
-**Backend Implementation (30 min)**
-```
-Endpoint: POST /transactions/transfer
-Input: {
-  from_account_id: int,
-  to_account_id: int,
-  amount: float,
-  description: string
-}
-Logic:
-  1. Verify JWT token
-  2. Check sender balance >= amount
-  3. Check daily transfer limit not exceeded
-  4. Deduct from sender account
-  5. Add to receiver account
-  6. Create transaction record
-  7. Return success/error
-```
-
-**Frontend Implementation (15 min)**
-- Add Transfer page with form
-- Input validation (amount, recipient)
-- API call to backend
-- Display response (success/error)
-
----
-
-#### Phase 4: Task 4 - Loan Application (120-165 min)
-
-**Backend Implementation (30 min)**
-```
-Endpoints:
-  POST /loans/apply
-    Input: {
-      user_id: int,
-      loan_type: string,
-      amount: float,
-      tenure_months: int,
-      interest_rate: float
-    }
-    Calculate EMI using formula
-    Store in database
-    Return loan details
-
-  PUT /loans/{id}/approve
-    Input: { status: "APPROVED"|"REJECTED" }
-    Update loan status
-    (Admin only)
-
-  GET /loans/{id}
-    Return loan details and EMI schedule
-```
-
-**Frontend Implementation (15 min)**
-- Add Loan Application page
-- Form with loan details
-- Real-time EMI calculation display
-- Show loan status after submission
-
----
-
-#### Phase 5: Integration & Testing (165-185 min)
-
-**Frontend-Backend Integration (15 min)**
-- Update API endpoints in frontend
-- Test authentication flow
-- Test transfer flow
-- Test loan flow
-
-**Manual Testing (10 min)**
-- Login test
-- Transfer test
-- Loan application test
-- Admin approval test
-
----
-
-#### Phase 6: GitHub Deployment (185-195 min)
-
-**Repository Setup (10 min)**
-```
-git init
-git add .
-git commit -m "SmartBank: Tasks 3 & 4 Implementation"
-git remote add origin https://github.com/yourusername/smartbank.git
-git push -u origin main
-```
-
-**Documentation (10 min)**
-- Add README.md
-- Add quick start instructions
-- Add test credentials
-
----
-
-## Setup Instructions
+## Installation Guide
 
 ### Prerequisites
-- Python 3.9 or higher
-- Node.js 18 or higher
-- Git
-- Text editor (VSCode recommended)
 
-### Installation Steps
+- Python 3.6 or newer  
+- No external dependencies—Python standard library only  
+- SQLite3 is bundled with Python standard library  
 
-#### 1. Clone & Setup Frontend
+To verify Python & SQLite installation:
 
-```bash
-# Clone template
-git clone https://github.com/cenksari/react-banking-app-template.git frontend
-cd frontend
+python --version
+python -c "import sqlite3"
 
-# Install dependencies
-npm install
+### Step-by-step Installation
 
-# Create environment file
-echo "VITE_API_URL=http://localhost:8000" > .env
+1. Clone/download project source to your system  
+2. Navigate to project directory
 
-# Verify setup
-npm run dev
-# Visit http://localhost:5173
-```
+cd money-transfer-system
+3. Initialize the database and load sample data
+python init_db.py
 
-#### 2. Setup Backend
+Expected output:
 
-```bash
-# Create backend directory
-mkdir backend
-cd backend
-
-# Create virtual environment
-python -m venv venv
-source venv/bin/activate  # Windows: venv\Scripts\activate
-
-# Install dependencies
-pip install fastapi uvicorn sqlalchemy pydantic python-jose passlib bcrypt
-
-# Create requirements file
-pip freeze > requirements.txt
-
-# Create environment file
-echo "DATABASE_URL=sqlite:///./smartbank.db
-SECRET_KEY=your-secret-key-here" > .env
-
-# Run server
-uvicorn app.main:app --reload
-# API available at http://localhost:8000
-```
-
-#### 3. Access Application
-
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:8000
-- **API Documentation**: http://localhost:8000/docs
-
-### Test Credentials
-
-| Role | Email | Password |
-|------|-------|----------|
-| Customer 1 | customer1@smartbank.com | password123 |
-| Customer 2 | customer2@smartbank.com | password123 |
-| Admin | admin@smartbank.com | admin123 |
+Database initialized successfully!
+Sample data inserted.
 
 ---
 
-## GitHub Deployment
+## Sample Data
 
-### Step 1: Create Repository
+### Sender Accounts
 
-1. Go to https://github.com/new
-2. Repository name: `smartbank`
-3. Description: "Banking backend system - Tasks 3 & 4"
-4. Choose: Public
-5. Create repository
+| Account Number | Password | Balance  | Currency | Contact    | Status |
+|----------------|----------|----------|----------|------------|--------|
+| ACC001         | pass123  | 10000.00 | INR      | 9876543210 | Active |
+| ACC002         | pass456  | 5000.00  | USD      | 9876543211 | Active |
+| ACC003         | pass789  | 15000.00 | EUR      | 9876543212 | Active |
 
-### Step 2: Push Code
+### Receiver Accounts
 
-```bash
-cd smartbank
-git init
-git add .
-git commit -m "Initial commit: SmartBank - Tasks 3 & 4 Implementation"
-git remote add origin https://github.com/yourusername/smartbank.git
-git branch -M main
-git push -u origin main
-```
-
-### Step 3: Repository Structure on GitHub
-
-```
-smartbank/
-├── frontend/
-├── backend/
-├── .gitignore
-└── README.md
-```
-
-### .gitignore Content
-
-```
-# Python
-__pycache__/
-*.py[cod]
-*.so
-venv/
-env/
-
-# Node
-node_modules/
-npm-debug.log
-yarn-error.log
-
-# Environment
-.env
-.env.local
-
-# Database
-*.db
-*.sqlite3
-
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
-
-# OS
-.DS_Store
-Thumbs.db
-```
+| Account Number | Holder      | Daily Limit | Currency | Status |
+|----------------|-------------|-------------|----------|--------|
+| REC001         | John Doe    | 50000.00    | INR      | Active |
+| REC002         | Jane Smith  | 10000.00    | USD      | Active |
+| REC003         | Bob Johnson | 20000.00    | EUR      | Active |
 
 ---
 
-## Demo Scenarios
+## Usage Instructions
 
-### Scenario 1: Customer Registration & Login
+### Starting the Application
 
-**Steps:**
-1. Open application
-2. Click "Register"
-3. Enter email and password
-4. Submit registration
-5. Login with credentials
-6. Dashboard displays
+python main_db.py
 
-**Expected Result:** ✅ User logged in, can see account balance
+Follow interactive CLI steps to:  
 
----
+- Enter sender account number  
+- Authenticate (max 3 attempts)  
+- Enter receiver account number  
+- Specify transfer amount  
+- Verify contact number  
+- Optionally enter transaction reason  
+- Confirm and execute transfer  
 
-### Scenario 2: Money Transfer (Task 3)
+Example:
+Enter sender account number: ACC001
+Enter password: pass123
+✓ Authentication successful!
+...
+✓ Transfer successful!
+Transaction ID: TXN20251025170830001
+New Balance: 9000.00 INR
 
-**Steps:**
-1. Login as Customer 1
-2. Click "Transfer Money"
-3. Select recipient (Customer 2)
-4. Enter amount: ₹2,000
-5. Submit transfer
-6. View confirmation
+### Viewing Transactions
 
-**Expected Result:** ✅ Transfer successful, balance updated
+Inspect transactions via SQLite CLI or GUI tool:
 
-**Verification:**
-- Customer 1 balance decreased by ₹2,000
-- Customer 2 balance increased by ₹2,000
-- Transaction appears in history
-
----
-
-### Scenario 3: Loan Application (Task 4)
-
-**Steps:**
-1. Login as Customer
-2. Click "Apply for Loan"
-3. Fill loan details:
-   - Loan Type: Personal
-   - Amount: ₹50,000
-   - Tenure: 24 months
-   - Interest: 12% p.a.
-4. View EMI calculation (should show ₹2,357/month)
-5. Submit application
-
-**Expected Result:** ✅ Loan application submitted
+sqlite3 money_transfer.db
+SELECT * FROM transactions ORDER BY transaction_timestamp DESC LIMIT 10;
 
 ---
 
-### Scenario 4: Admin Loan Approval
+## Error Handling
 
-**Steps:**
-1. Login as Admin
-2. View pending loans
-3. Click loan application
-4. Review details
-5. Click "Approve" or "Reject"
-6. Submit decision
+All validation errors and exceptions are gracefully managed and logged:
 
-**Expected Result:** ✅ Loan status updated
+| Error Type          | System Response                              |
+|---------------------|---------------------------------------------|
+| Invalid credentials  | Max 3 attempts, then abort                   |
+| Insufficient funds   | Transaction blocked, details shown          |
+| Currency mismatch    | Rejected, instruct user on valid options    |
+| Exceeding daily limit| Transaction denied, daily limit reported    |
+| Inactive account    | Blocked, status message returned             |
+| Invalid amount       | Input re-prompted                            |
+| Contact mismatch     | Authentication failed                        |
+| Database error       | Transaction rolled back, error logged       |
 
-**Verification:**
-- Customer sees "APPROVED" status
-- Loan appears in active loans
-
----
-
-### Scenario 5: Edge Cases
-
-**Test Insufficient Balance:**
-1. Try to transfer more than balance
-2. System shows error: "Insufficient balance"
-
-**Test Daily Limit:**
-1. Try to transfer exceeding daily limit
-2. System shows error: "Daily limit exceeded"
-
-**Test Invalid Loan Amount:**
-1. Apply with negative amount
-2. System shows validation error
+All errors are captured in the transactions log for compliance and analysis.
 
 ---
 
-## Success Metrics
+## Transactional Operations
 
-### Functional Requirements
+The entire money transfer workflow is performed inside a single SQLite transaction, guaranteeing:
 
-| Requirement | Status | Evidence |
-|-------------|--------|----------|
-| User registration | ✅ | User can create account |
-| User authentication | ✅ | JWT token generated |
-| Account balance view | ✅ | Balance displays correctly |
-| Money transfer | ✅ | Transfer executed, balances updated |
-| Balance validation | ✅ | Insufficient funds blocked |
-| Loan application | ✅ | Application submitted to database |
-| EMI calculation | ✅ | Correct formula applied |
-| Loan status tracking | ✅ | Status changes: Pending → Approved |
-| Admin approval | ✅ | Admin can approve/reject loans |
-| Transaction history | ✅ | Transfers appear in history |
+- **Atomicity:** Either all changes succeed, or none are made  
+- **Consistency:** All business logic is strictly enforced  
+- **Isolation:** No interference between concurrent transactions  
+- **Durability:** Changes are persisted reliably  
 
-### Non-Functional Requirements
-
-| Requirement | Target | Status |
-|-------------|--------|--------|
-| API response time | < 200ms | ✅ |
-| Database transactions | Atomic | ✅ |
-| Security | JWT auth | ✅ |
-| Code quality | Clean | ✅ |
-| Documentation | Complete | ✅ |
-
-### Deliverables
-
-| Deliverable | Description | Status |
-|-------------|-------------|--------|
-| Frontend | React template customized | ✅ |
-| Backend | FastAPI implementation | ✅ |
-| Database | SQLite with models | ✅ |
-| API | 10+ endpoints | ✅ |
-| GitHub | Code repository | ✅ |
-| README | This documentation | ✅ |
+A failed transaction results in immediate rollback and log entry with root-cause details.
 
 ---
 
-## Project Statistics
+## Testing Suite
 
-### Code Metrics
-- **Backend**: ~400-500 lines of Python
-- **Frontend**: Template-based (pre-built)
-- **Database**: 4 core tables
-- **API Endpoints**: 10+ RESTful endpoints
+Run automated tests for all business logic and edge cases:
 
-### Development Time
-- **Setup**: 30 minutes
-- **Backend**: 60 minutes
-- **Frontend**: 30 minutes
-- **Integration & Testing**: 30 minutes
-- **Deployment**: 10 minutes
-- **Total**: ~3 hours
+python test_db.py
 
-### Technical Coverage
-- **Authentication**: ✅ JWT
-- **Database**: ✅ SQLite + SQLAlchemy
-- **Business Logic**: ✅ Transfer + Loan
-- **Validation**: ✅ Pydantic
-- **Error Handling**: ✅ Comprehensive
+Tests include authentication, balance checking, daily limits, rollback scenarios, and audit log validation.
+
+Expected output:
+
+All tests passed! System is functioning correctly.
 
 ---
 
-## About This Project
+## Security Features
 
-**Project**: SmartBank Banking Backend System  
-**Hackathon**: HCLTech 2025  
-**Duration**: 3 hours  
-**Tasks Completed**: Task 3 (Money Transfer) + Task 4 (Loan Application)  
-**Technology**: Python, FastAPI, React, SQLite  
+- Password authentication plus contact verification  
+- Account activation status validation  
+- Input sanitization at every step  
+- Maximum attempt limits for login  
+- Complete transaction logging (including failures)  
+- Full rollback on errors  
 
----
-
-## Author
-
-**Vijay**  
-AI/ML Engineer  
-HCLTech Hackathon 2025
+**Note:**  
+This is an educational demonstration. For real-world systems, implement hashed passwords (e.g., bcrypt), encrypted connections, multi-factor authentication, and periodic security audits.
 
 ---
 
-## License
+## Troubleshooting
 
-This project is developed for educational purposes as part of HCLTech Hackathon 2025.
+| Issue                     | Solution                                      |
+|---------------------------|-----------------------------------------------|
+| "Database is locked" error | Ensure no other applications are using the DB |
+| Authentication fails      | Reset database with `python init_db.py`        |
+| Daily limits not resetting | Manually update `last_reset_date` and reset amount |
 
 ---
 
-**Built with precision for HCLTech Hackathon 2025** ✨
+## Future Enhancements
+
+Planned features for future versions:
+
+- Web interface (Flask/Django)  
+- REST API for integrations  
+- Multi-currency support with exchange rates  
+- SMS/email notifications  
+- Scheduled/recurring transfers  
+- Sender transaction limits  
+- Admin dashboard for analytics  
+- Mobile app support  
+- Blockchain integration (immutable logs)  
+- ML-powered fraud detection  
+- Role management (user/admin/auditor)  
+- Data export (PDF/CSV)  
+
+---
+
+## Contributing
+
+- Fork and clone the repo  
+- Create a feature branch  
+- Follow PEP8/Python best practices  
+- Add and document tests for features  
+- Submit pull requests with clear descriptions  
+
+---
+
+## License and Acknowledgments
+
+- **License:** MIT (See LICENSE file if included)  
+- **Author:** Vijay  
+- **Acknowledgments:**  
+Open-source Python and SQLite community, hackathon mentors and organizers, and all contributors.
