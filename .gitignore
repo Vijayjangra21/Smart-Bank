@@ -1,0 +1,37 @@
+# Database files - DO NOT UPLOAD
+*.db
+*.sqlite
+*.sqlite3
+money_transfer.db
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual environment
+venv/
+env/
+ENV/
+.venv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*.sublime-*
+
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs
+*.log
+
+# Personal data or test data
+test_data/
+personal_notes.txt
